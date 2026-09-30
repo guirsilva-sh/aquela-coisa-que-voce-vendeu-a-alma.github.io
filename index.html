@@ -2,14 +2,15 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Quarteirão</title>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@800&display=swap" rel="stylesheet">
 <style>
   /* COR ÚNICA DO SITE: troque só aqui */
   :root { --fundo: #CFE8D5; --tinta: #16243A; }
 
-  html { -webkit-text-size-adjust: 100%; }
+  html { -webkit-text-size-adjust: 100%; overflow-x: hidden; overflow-x: clip; }
+  img { max-width: 100%; }
   body { margin: 0; font-family: Arial, sans-serif; color: var(--tinta); background: var(--fundo); overflow-x: hidden; }
   h1, h2 { font-family: "Bricolage Grotesque", "Arial Black", sans-serif; font-weight: 800; margin: 0; line-height: 1; }
   section { position: relative; overflow: hidden; }
@@ -20,13 +21,16 @@
   #confete { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
 
   /* Topo */
-  .hero { min-height: 100vh; min-height: 100svh; display: grid; place-items: center; text-align: center; padding: 2rem; }
+  .hero { box-sizing: border-box; min-height: 100vh; min-height: 100svh; display: grid; place-items: center; text-align: center;
+    padding: 2rem max(2rem, env(safe-area-inset-right)) 2rem max(2rem, env(safe-area-inset-left)); }
+  .hero-txt { position: relative; z-index: 1; max-width: 100%; }
   .hero::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 18px;
     background: linear-gradient(90deg, #8B5A3C 0 12.5%, #7CC8E8 0 25%, #F08BB6 0 37.5%, #F59A2F 0 50%,
       #D8392B 0 62.5%, #F6C945 0 75%, #2F9E5A 0 87.5%, #2553A6 0); }
   .hero h1 { font-size: clamp(2.4rem, 14vw, 10rem); text-shadow: .04em .04em 0 #F6C945; }
-  .hero h1 span { display: inline-block; transition: transform .2s; animation: entra .7s cubic-bezier(.3,1.6,.5,1) backwards; cursor: default; }
-  .hero h1 span:hover { transform: translateY(-.12em) rotate(-5deg); }
+  .hero h1 .pal { display: inline-block; white-space: nowrap; }
+  .hero h1 span span { display: inline-block; transition: transform .2s; animation: entra .7s cubic-bezier(.3,1.6,.5,1) backwards; cursor: default; }
+  .hero h1 span span:hover { transform: translateY(-.12em) rotate(-5deg); }
   @keyframes entra { from { opacity: 0; transform: translateY(-.8em) rotate(-14deg); } }
   .hero p { font-size: 1.3rem; margin-top: 1rem; animation: sobe .8s .9s ease-out backwards; }
   @keyframes sobe { from { opacity: 0; transform: translateY(20px); } }
@@ -51,7 +55,7 @@
   /* Tabuleiro */
   .jogo { padding: 5rem 1rem; text-align: center; }
   .jogo h2 { font-size: clamp(2rem, 6vw, 4rem); margin-bottom: 2rem; }
-  .tabuleiro { width: min(94vw, 640px, max(300px, 90svh)); aspect-ratio: 1; margin: 0 auto; display: grid;
+  .tabuleiro { container-type: inline-size; width: min(94vw, 640px, max(300px, 90svh)); aspect-ratio: 1; margin: 0 auto; display: grid;
     grid-template: repeat(11, 1fr) / repeat(11, 1fr); background: #EEF7F0; border: 5px solid var(--tinta);
     box-shadow: 10px 10px 0 var(--tinta); transition: transform .15s ease-out; position: relative; z-index: 1; }
   .solto { position: absolute; z-index: 0; border: 4px solid var(--tinta); border-radius: 12px; box-shadow: 6px 6px 0 var(--tinta);
@@ -63,6 +67,11 @@
   @keyframes pisa { 40% { transform: scale(1.4); z-index: 3; filter: brightness(1.25); } }
   .canto { background: #F6C945; display: grid; place-items: center; text-align: center;
     font: bold clamp(.4rem, 1.6vw, .75rem) Arial, sans-serif; line-height: 1.05; overflow: hidden; padding: 1px; overflow-wrap: anywhere; }
+  .canto .i { display: none; }
+  @container (max-width: 330px) {
+    .canto .l { display: none; }
+    .canto .i { display: block; font-size: 4.6cqw; line-height: 1; }
+  }
   .peao { position: absolute; left: 50%; top: 50%; width: 150%; max-width: none;
     transform: translate(-50%, -55%); z-index: 2; pointer-events: none; }
   .peao.pula { animation: pulo .25s ease-out; }
@@ -88,11 +97,14 @@
 
   /* Mensagem da primeira jogada */
   dialog { border: 4px solid var(--tinta); border-radius: 14px; box-shadow: 8px 8px 0 var(--tinta); padding: 2rem;
-    max-width: min(90vw, 420px); text-align: center; font-size: 1.25rem; line-height: 1.4; color: var(--tinta); background: #fff; }
+    max-width: min(90vw, 420px); max-height: 85vh; max-height: 85dvh; overflow-y: auto; box-sizing: border-box; text-align: center; font-size: 1.25rem; line-height: 1.4; color: var(--tinta); background: #fff; }
   dialog[open] { animation: pop .45s cubic-bezier(.3,1.6,.5,1); }
   @keyframes pop { from { opacity: 0; transform: scale(.6) rotate(-4deg); } }
   dialog::backdrop { background: rgba(22, 36, 58, .6); }
   dialog p { margin: 0 0 1.5rem; }
+  .escolhas { display: flex; gap: 1rem; justify-content: center; }
+  #nao { background: #2553A6; }
+  #nao.solta { position: fixed; z-index: 5; }
 
 
   /* ---------- RESPONSIVO ---------- */
@@ -105,7 +117,7 @@
   @media (min-width: 1200px) { .tabuleiro { width: min(94vw, 720px, max(300px, 90svh)); } }
 
   /* Tablet e celular: fotos ficam acima e abaixo do tabuleiro, sem ficar atrás dele */
-  @media (max-width: 999px) {
+  @media (max-width: 1099px) {
     .jogo { --w: clamp(90px, 28vw, 200px); padding: calc(var(--w) + 3.5rem) 1rem; }
     .solto { width: var(--w); border-width: 3px; box-shadow: 4px 4px 0 var(--tinta); }
     .f1 { left: 4%; top: 1.2rem; }  .f2 { right: 4%; top: 1.2rem; }
@@ -113,7 +125,7 @@
   }
 
   @media (max-width: 600px) {
-    .hero { padding: 1rem; }
+    .hero { padding: 1rem 1rem 6rem; }
     .hero p { font-size: 1.05rem; }
     .cat { right: 6%; bottom: 6%; }
     .coin { width: 40px; height: 40px; border-width: 3px; font-size: 1.05rem; }
@@ -141,7 +153,7 @@
 <canvas id="confete"></canvas>
 
 <section class="hero">
-  <div data-speed="-0.1">
+  <div class="hero-txt" data-speed="-0.1">
     <h1>Aquele jogo em que voce é boa</h1>
     <p>Um tabuleiro feito de coisas que você ama.</p>
   </div>
@@ -152,7 +164,7 @@
 </section>
 
 <div class="faixa" aria-hidden="true">
-  <div class="trilho">Quarteirão ★ Role os dados ★ Quarteirão ★ Role os dados ★ Quarteirão ★ Role os dados ★ Quarteirão ★ Role os dados ★ </div>
+  <div class="trilho" id="trilho"></div>
 </div>
 
 <section class="jogo">
@@ -178,6 +190,14 @@
   <form method="dialog"><button class="botao">Continuar jogando</button></form>
 </dialog>
 
+<dialog id="pergunta">
+  <p id="texto-pergunta"></p>
+  <div class="escolhas">
+    <button class="botao" id="sim" type="button">Sim</button>
+    <button class="botao" id="nao" type="button">Não</button>
+  </div>
+</dialog>
+
 <script>
   const reduzir = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -192,7 +212,7 @@
     itens.forEach(el => {
       const r = el.closest('section').getBoundingClientRect();
       const d = r.top + r.height / 2 - innerHeight / 2;
-      const f = el.classList.contains('solto') && innerWidth < 1000 ? .3 : 1; // fotos se mexem menos no celular
+      const f = el.classList.contains('solto') && innerWidth < 1100 ? .3 : 1; // fotos se mexem menos no celular
       el.style.translate = '0 ' + d * el.dataset.speed * f + 'px';
     });
   }
@@ -201,11 +221,15 @@
   parallax();
 
   // ---------- EFEITOS ----------
+  // Faixa: repete o texto até cobrir telas largas (metade idêntica = loop sem emenda)
+  document.getElementById('trilho').textContent = 'Quarteirão ★ Role os dados ★\u00a0\u00a0'.repeat(16);
+
   // Título: letras entram uma a uma
   const h1 = document.querySelector('.hero h1');
   const titulo = h1.textContent;
   h1.setAttribute('aria-label', titulo);
-  h1.innerHTML = [...titulo].map((c, i) => '<span aria-hidden="true" style="animation-delay:' + i * 70 + 'ms">' + c + '</span>').join('');
+  let n = 0;
+  h1.innerHTML = titulo.split(' ').map(p => '<span class="pal" aria-hidden="true">' + [...p].map(c => '<span style="animation-delay:' + (n++ * 70) + 'ms">' + c + '</span>').join('') + '</span>').join(' ');
 
   // Elementos aparecem ao rolar
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); io.unobserve(e.target); } }), { threshold: .2 });
@@ -249,12 +273,40 @@
     if (parts.length) requestAnimationFrame(quadro);
   }
 
+  // ---------- PERGUNTA FINAL ----------
+  const PERGUNTA = 'Você promete cuidar de você e seguir em frente?'; // troque a frase aqui
+  const pergunta = document.getElementById('pergunta');
+  const sim = document.getElementById('sim'), nao = document.getElementById('nao');
+  document.getElementById('texto-pergunta').textContent = PERGUNTA;
+
+  document.getElementById('mensagem').addEventListener('close', () => pergunta.showModal());
+  pergunta.addEventListener('cancel', e => e.preventDefault()); // Esc não pula a pergunta
+  sim.addEventListener('click', () => { pergunta.close(); confete(); });
+
+  // O "Não" foge: teletransporta para outro ponto da tela
+  function foge(e) {
+    e.preventDefault();
+    const w = nao.offsetWidth, h = nao.offsetHeight, m = 12;
+    const s = sim.getBoundingClientRect();
+    let x, y, tent = 0;
+    do {
+      x = m + Math.random() * Math.max(0, innerWidth - w - 2 * m);
+      y = m + Math.random() * Math.max(0, innerHeight - h - 2 * m);
+    } while (++tent < 20 && x < s.right + 10 && x + w > s.left - 10 && y < s.bottom + 10 && y + h > s.top - 10);
+    nao.classList.add('solta');
+    nao.style.left = x + 'px';
+    nao.style.top = y + 'px';
+  }
+  nao.addEventListener('pointerenter', foge);
+  nao.addEventListener('pointerdown', foge);
+  nao.addEventListener('click', foge); // teclado
+
   // ---------- TABULEIRO E DADOS ----------
   const MENSAGEM = 'Na real fiz esse site para provar que eu conseguiria ganhar de voce mas agora é só uma declaração de carinnho, porque me importo com voce e acho que tudo aqui continua sendo uma partezinha sua. Enfim, me preocupo com voce, espero que, apesar do ocorrido ontem e ao longo da semana, voce consiga encontrar forcas para continuar.'; 
   const CORES = { 1:'#8B5A3C', 3:'#8B5A3C', 6:'#7CC8E8', 8:'#7CC8E8', 9:'#7CC8E8', 11:'#F08BB6', 13:'#F08BB6', 14:'#F08BB6',
     16:'#F59A2F', 18:'#F59A2F', 19:'#F59A2F', 21:'#D8392B', 23:'#D8392B', 24:'#D8392B', 26:'#F6C945', 27:'#F6C945',
     29:'#F6C945', 31:'#2F9E5A', 32:'#2F9E5A', 34:'#2F9E5A', 37:'#2553A6', 39:'#2553A6' };
-  const CANTOS = { 0: 'Início', 10: 'Cadeia', 20: 'Parada livre', 30: 'Vá preso' };
+  const CANTOS = { 0: ['Início', '🏁'], 10: ['Cadeia', '🔒'], 20: ['Parada livre', '🅿️'], 30: ['Vá preso', '🚔'] };
 
   const tabuleiro = tab;
   const casas = [];
@@ -270,7 +322,7 @@
     casa.style.gridColumn = col;
     casa.style.gridRow = row;
     if (CORES[i]) casa.style.background = CORES[i];
-    if (i in CANTOS) { casa.classList.add('canto'); casa.textContent = CANTOS[i]; }
+    if (i in CANTOS) { casa.classList.add('canto'); casa.setAttribute('aria-label', CANTOS[i][0]); casa.innerHTML = '<span class="l">' + CANTOS[i][0] + '</span><span class="i" aria-hidden="true">' + CANTOS[i][1] + '</span>'; }
     tabuleiro.appendChild(casa);
     casas.push(casa);
   }
