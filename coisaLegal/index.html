@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quarteirão</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@800&display=swap" rel="stylesheet">
+<style>
+  /* COR ÚNICA DO SITE: troque só aqui */
+  :root { --fundo: #CFE8D5; --tinta: #16243A; }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; font-family: Arial, sans-serif; color: var(--tinta); background: var(--fundo); overflow-x: hidden; }
+  h1, h2 { font-family: "Bricolage Grotesque", "Arial Black", sans-serif; font-weight: 800; margin: 0; line-height: 1; }
+  section { position: relative; overflow: hidden; }
+
+  /* Barra de progresso da rolagem */
+  #progresso { position: fixed; left: 0; bottom: 0; height: 6px; width: 100%; background: #D8392B;
+    transform-origin: left; transform: scaleX(0); z-index: 60; }
+  #confete { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
+
+  /* Topo */
+  .hero { min-height: 100vh; min-height: 100svh; display: grid; place-items: center; text-align: center; padding: 2rem; }
+  .hero::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 18px;
+    background: linear-gradient(90deg, #8B5A3C 0 12.5%, #7CC8E8 0 25%, #F08BB6 0 37.5%, #F59A2F 0 50%,
+      #D8392B 0 62.5%, #F6C945 0 75%, #2F9E5A 0 87.5%, #2553A6 0); }
+  .hero h1 { font-size: clamp(2.4rem, 14vw, 10rem); text-shadow: .04em .04em 0 #F6C945; }
+  .hero h1 span { display: inline-block; transition: transform .2s; animation: entra .7s cubic-bezier(.3,1.6,.5,1) backwards; cursor: default; }
+  .hero h1 span:hover { transform: translateY(-.12em) rotate(-5deg); }
+  @keyframes entra { from { opacity: 0; transform: translateY(-.8em) rotate(-14deg); } }
+  .hero p { font-size: 1.3rem; margin-top: 1rem; animation: sobe .8s .9s ease-out backwards; }
+  @keyframes sobe { from { opacity: 0; transform: translateY(20px); } }
+  .float { position: absolute; pointer-events: none; }
+  .cat { width: clamp(90px, 14vw, 170px); right: 10%; bottom: 10%; transition: transform .25s ease-out; }
+  .coin { width: 54px; height: 54px; border-radius: 50%; background: #F6C945; border: 4px solid var(--tinta);
+    display: grid; place-items: center; font: 800 1.4rem Arial, sans-serif; animation: gira 2.2s ease-in-out infinite alternate; }
+  .coin:nth-of-type(2) { animation-delay: -.7s; } .coin:nth-of-type(3) { animation-delay: -1.4s; }
+  @keyframes gira { to { rotate: 14deg; scale: 1.14; } }
+
+  /* Faixa de texto correndo */
+  .faixa { background: var(--tinta); color: var(--fundo); padding: .9rem 0; white-space: nowrap; transform: rotate(-1.5deg); margin: -1rem -2rem 0; }
+  .trilho { display: inline-block; font: 800 1.4rem "Bricolage Grotesque", Arial, sans-serif; animation: corre 18s linear infinite; }
+  .faixa:hover .trilho { animation-play-state: paused; }
+  @keyframes corre { to { transform: translateX(-50%); } }
+
+  /* Aparecer ao rolar */
+  .rev { opacity: 0; translate: 0 40px; transition: opacity .8s ease, translate .8s cubic-bezier(.2,.8,.2,1), scale .8s cubic-bezier(.2,.8,.2,1); }
+  .rev.zoom { translate: none; scale: .9; }
+  .rev.vis { opacity: 1; translate: none; scale: 1; }
+
+  /* Tabuleiro */
+  .jogo { padding: 5rem 1rem; text-align: center; }
+  .jogo h2 { font-size: clamp(2rem, 6vw, 4rem); margin-bottom: 2rem; }
+  .tabuleiro { width: min(94vw, 640px, max(300px, 90svh)); aspect-ratio: 1; margin: 0 auto; display: grid;
+    grid-template: repeat(11, 1fr) / repeat(11, 1fr); background: #EEF7F0; border: 5px solid var(--tinta);
+    box-shadow: 10px 10px 0 var(--tinta); transition: transform .15s ease-out; position: relative; z-index: 1; }
+  .solto { position: absolute; z-index: 0; border: 4px solid var(--tinta); border-radius: 12px; box-shadow: 6px 6px 0 var(--tinta);
+    background: #fff; object-fit: cover; rotate: var(--r); animation: flutua 3.2s ease-in-out infinite alternate; transition: scale .25s; }
+  .solto:hover { scale: 1.1; z-index: 3; }
+  @keyframes flutua { to { rotate: calc(var(--r) * -1); } }
+  .casa { position: relative; background: #fff center / cover; border: 1px solid var(--tinta); }
+  .casa.pisa { animation: pisa .6s ease-out; }
+  @keyframes pisa { 40% { transform: scale(1.4); z-index: 3; filter: brightness(1.25); } }
+  .canto { background: #F6C945; display: grid; place-items: center; text-align: center;
+    font: bold clamp(.4rem, 1.6vw, .75rem) Arial, sans-serif; line-height: 1.05; overflow: hidden; padding: 1px; overflow-wrap: anywhere; }
+  .peao { position: absolute; left: 50%; top: 50%; width: 150%; max-width: none;
+    transform: translate(-50%, -55%); z-index: 2; pointer-events: none; }
+  .peao.pula { animation: pulo .25s ease-out; }
+  @keyframes pulo { 50% { transform: translate(-50%, -115%) scale(1.12) rotate(-6deg); } }
+  .centro { grid-area: 2 / 2 / 11 / 11; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 1.2rem; padding: 1rem; }
+  .dados { display: flex; gap: 1.2rem; }
+  .dado { --s: clamp(50px, 11vw, 88px); width: var(--s); height: var(--s); background: #fff; border: 4px solid var(--tinta);
+    border-radius: calc(var(--s) * .18); box-shadow: 4px 4px 0 var(--tinta); display: grid;
+    grid-template: repeat(3, 1fr) / repeat(3, 1fr); padding: calc(var(--s) * .1); }
+  .dado i { place-self: center; width: 66%; aspect-ratio: 1; border-radius: 50%; }
+  .dado i.p { background: var(--tinta); }
+  .dado.rolando { animation: balanca .12s infinite alternate; }
+  @keyframes balanca { from { transform: rotate(-14deg) scale(1.08); } to { transform: rotate(12deg) scale(1.08); } }
+  .botao { font: 800 1.1rem "Bricolage Grotesque", Arial, sans-serif; padding: .8em 1.3em; background: #D8392B; color: #fff;
+    border: 3px solid var(--tinta); border-radius: 12px; box-shadow: 4px 4px 0 var(--tinta); cursor: pointer;
+    transition: translate .15s, box-shadow .15s; }
+  .botao:hover { translate: -2px -2px; box-shadow: 6px 6px 0 var(--tinta); }
+  .botao:active { transform: translate(4px, 4px); box-shadow: none; }
+  .botao.chama { animation: pulsa 1.3s ease-in-out infinite; }
+  @keyframes pulsa { 50% { scale: 1.08; } }
+  #resultado { margin: 0; font-weight: bold; min-height: 2.6em; }
+
+  /* Mensagem da primeira jogada */
+  dialog { border: 4px solid var(--tinta); border-radius: 14px; box-shadow: 8px 8px 0 var(--tinta); padding: 2rem;
+    max-width: min(90vw, 420px); text-align: center; font-size: 1.25rem; line-height: 1.4; color: var(--tinta); background: #fff; }
+  dialog[open] { animation: pop .45s cubic-bezier(.3,1.6,.5,1); }
+  @keyframes pop { from { opacity: 0; transform: scale(.6) rotate(-4deg); } }
+  dialog::backdrop { background: rgba(22, 36, 58, .6); }
+  dialog p { margin: 0 0 1.5rem; }
+
+
+  /* ---------- RESPONSIVO ---------- */
+  /* Computador: fotos nas laterais do tabuleiro */
+  .f1 { left: 3%; top: 10%; width: clamp(90px, 16vw, 210px); }
+  .f2 { right: 4%; top: 18%; width: clamp(70px, 12vw, 160px); }
+  .f3 { left: 5%; bottom: 8%; width: clamp(90px, 15vw, 200px); }
+  .f4 { right: 3%; bottom: 6%; width: clamp(100px, 17vw, 220px); }
+
+  @media (min-width: 1200px) { .tabuleiro { width: min(94vw, 720px, max(300px, 90svh)); } }
+
+  /* Tablet e celular: fotos ficam acima e abaixo do tabuleiro, sem ficar atrás dele */
+  @media (max-width: 999px) {
+    .jogo { --w: clamp(90px, 28vw, 200px); padding: calc(var(--w) + 3.5rem) 1rem; }
+    .solto { width: var(--w); border-width: 3px; box-shadow: 4px 4px 0 var(--tinta); }
+    .f1 { left: 4%; top: 1.2rem; }  .f2 { right: 4%; top: 1.2rem; }
+    .f3 { left: 4%; bottom: 1.2rem; top: auto; } .f4 { right: 4%; bottom: 1.2rem; top: auto; }
+  }
+
+  @media (max-width: 600px) {
+    .hero { padding: 1rem; }
+    .hero p { font-size: 1.05rem; }
+    .cat { right: 6%; bottom: 6%; }
+    .coin { width: 40px; height: 40px; border-width: 3px; font-size: 1.05rem; }
+    .faixa { margin: -.5rem -2rem 0; padding: .7rem 0; }
+    .trilho { font-size: 1.1rem; }
+    .tabuleiro { border-width: 3px; box-shadow: 6px 6px 0 var(--tinta); }
+    .centro { gap: .7rem; padding: .3rem; }
+    .dados { gap: .8rem; }
+    .dado { border-width: 3px; box-shadow: 3px 3px 0 var(--tinta); }
+    .botao { font-size: 1rem; padding: .7em 1.1em; border-width: 2px; box-shadow: 3px 3px 0 var(--tinta); }
+    #resultado { font-size: .85rem; min-height: 3em; }
+    dialog { padding: 1.4rem; font-size: 1.1rem; }
+  }
+
+  /* Celular deitado (pouca altura) */
+  @media (max-height: 480px) and (orientation: landscape) {
+    .hero { min-height: 0; padding: 4rem 1rem 3rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div id="progresso"></div>
+<canvas id="confete"></canvas>
+
+<section class="hero">
+  <div data-speed="-0.1">
+    <h1>Quarteirão</h1>
+    <p>Um tabuleiro feito de coisas que você ama.</p>
+  </div>
+  <img class="float cat" id="gato" data-speed="0.15" src="gatinho.png" alt="Gatinho amarelo com um Z no peito">
+  <div class="float coin" data-speed="0.3" style="left: 12%; top: 25%;">$</div>
+  <div class="float coin" data-speed="-0.15" style="right: 18%; top: 18%;">$</div>
+  <div class="float coin" data-speed="0.2" style="left: 25%; bottom: 14%;">$</div>
+</section>
+
+<div class="faixa" aria-hidden="true">
+  <div class="trilho">Quarteirão ★ Role os dados ★ Quarteirão ★ Role os dados ★ Quarteirão ★ Role os dados ★ Quarteirão ★ Role os dados ★ </div>
+</div>
+
+<section class="jogo">
+  <img class="solto f1" data-speed="0.25" src="gatos.jpg" alt="Família dos Gatos Persas" style="--r:-6deg; animation-delay:-.5s">
+  <img class="solto f2" data-speed="-0.2" src="bator.jpg" alt="Bator" style="--r:5deg; animation-delay:-1.3s">
+  <img class="solto f3" data-speed="-0.15" src="alho-pikado.jpg" alt="Banda Alho Pikado" style="--r:4deg; animation-delay:-2s">
+  <img class="solto f4" data-speed="0.3" src="blocos.jpg" alt="Blocos de montar" style="--r:-5deg; animation-delay:-.9s">
+  <h2 class="rev">Sua vez de jogar</h2>
+  <div class="tabuleiro rev zoom" id="tabuleiro">
+    <div class="centro">
+      <div class="dados">
+        <div class="dado" id="d1" data-speed="0.08"></div>
+        <div class="dado" id="d2" data-speed="-0.06"></div>
+      </div>
+      <button class="botao chama" id="rolar" type="button">Role os dados</button>
+      <p id="resultado" aria-live="polite">Toque no botão para começar.</p>
+    </div>
+  </div>
+</section>
+
+<dialog id="mensagem">
+  <p id="texto-mensagem"></p>
+  <form method="dialog"><button class="botao">Continuar jogando</button></form>
+</dialog>
+
+<script>
+  const reduzir = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- PARALLAX ----------
+  // Número positivo = anda mais rápido. Negativo = mais devagar.
+  const itens = document.querySelectorAll('[data-speed]');
+  const barra = document.getElementById('progresso');
+  function parallax() {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    barra.style.transform = 'scaleX(' + (max > 0 ? scrollY / max : 0) + ')';
+    if (reduzir) return;
+    itens.forEach(el => {
+      const r = el.closest('section').getBoundingClientRect();
+      const d = r.top + r.height / 2 - innerHeight / 2;
+      const f = el.classList.contains('solto') && innerWidth < 1000 ? .3 : 1; // fotos se mexem menos no celular
+      el.style.translate = '0 ' + d * el.dataset.speed * f + 'px';
+    });
+  }
+  addEventListener('scroll', parallax, { passive: true });
+  addEventListener('resize', parallax);
+  parallax();
+
+  // ---------- EFEITOS ----------
+  // Título: letras entram uma a uma
+  const h1 = document.querySelector('.hero h1');
+  const titulo = h1.textContent;
+  h1.setAttribute('aria-label', titulo);
+  h1.innerHTML = [...titulo].map((c, i) => '<span aria-hidden="true" style="animation-delay:' + i * 70 + 'ms">' + c + '</span>').join('');
+
+  // Elementos aparecem ao rolar
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); io.unobserve(e.target); } }), { threshold: .2 });
+  document.querySelectorAll('.rev').forEach(el => reduzir ? el.classList.add('vis') : io.observe(el));
+
+  // Gatinho do topo segue o mouse; tabuleiro inclina em 3D
+  const gato = document.getElementById('gato');
+  const tab = document.getElementById('tabuleiro');
+  if (!reduzir && matchMedia('(hover: hover)').matches) {
+    addEventListener('mousemove', e => {
+      const x = e.clientX / innerWidth - .5, y = e.clientY / innerHeight - .5;
+      gato.style.transform = 'translate(' + x * -40 + 'px,' + y * -40 + 'px) rotate(' + x * 14 + 'deg)';
+    });
+    tab.addEventListener('mousemove', e => {
+      const r = tab.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+      tab.style.transform = 'perspective(1000px) rotateX(' + y * -10 + 'deg) rotateY(' + x * 10 + 'deg)';
+    });
+    tab.addEventListener('mouseleave', () => { tab.style.transform = ''; });
+  }
+
+  // Confete
+  const cv = document.getElementById('confete'), cx = cv.getContext('2d');
+  let parts = [];
+  function confete() {
+    if (reduzir) return;
+    cv.width = innerWidth; cv.height = innerHeight;
+    const cores = ['#D8392B', '#F6C945', '#2F9E5A', '#2553A6', '#F08BB6', '#F59A2F'];
+    for (let i = 0; i < 140; i++) parts.push({ x: innerWidth / 2, y: innerHeight * .55, vx: (Math.random() - .5) * 18,
+      vy: -Math.random() * 16 - 4, w: 6 + Math.random() * 6, a: Math.random() * 6, va: (Math.random() - .5) * .4,
+      c: cores[i % cores.length], vida: 110 + Math.random() * 50 });
+    if (parts.length === 140) requestAnimationFrame(quadro);
+  }
+  function quadro() {
+    cx.clearRect(0, 0, cv.width, cv.height);
+    parts = parts.filter(p => p.vida-- > 0);
+    parts.forEach(p => {
+      p.vy += .45; p.x += p.vx; p.y += p.vy; p.a += p.va; p.vx *= .99;
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.a); cx.fillStyle = p.c; cx.fillRect(-p.w / 2, -p.w / 4, p.w, p.w / 2); cx.restore();
+    });
+    if (parts.length) requestAnimationFrame(quadro);
+  }
+
+  // ---------- TABULEIRO E DADOS ----------
+  const MENSAGEM = 'Na real fiz esse site para provar que eu conseguiria ganhar de voce mas agora é só uma declaração de carinnho, porque me importo com voce e acho que tudo aqui continua sendo uma partezinha sua. Enfim, me preocupo com voce, espero que, apesar do ocorrido ontem e ao longo da semana, voce consiga encontrar forcas para continuar.'; 
+  const CORES = { 1:'#8B5A3C', 3:'#8B5A3C', 6:'#7CC8E8', 8:'#7CC8E8', 9:'#7CC8E8', 11:'#F08BB6', 13:'#F08BB6', 14:'#F08BB6',
+    16:'#F59A2F', 18:'#F59A2F', 19:'#F59A2F', 21:'#D8392B', 23:'#D8392B', 24:'#D8392B', 26:'#F6C945', 27:'#F6C945',
+    29:'#F6C945', 31:'#2F9E5A', 32:'#2F9E5A', 34:'#2F9E5A', 37:'#2553A6', 39:'#2553A6' };
+  const CANTOS = { 0: 'Início', 10: 'Cadeia', 20: 'Parada livre', 30: 'Vá preso' };
+
+  const tabuleiro = tab;
+  const casas = [];
+  for (let i = 0; i < 40; i++) {
+    let col, row;
+    if (i <= 10)      { row = 11; col = 11 - i; }
+    else if (i <= 20) { col = 1;  row = 11 - (i - 10); }
+    else if (i <= 30) { row = 1;  col = 1 + (i - 20); }
+    else              { col = 11; row = 1 + (i - 30); }
+
+    const casa = document.createElement('div');
+    casa.className = 'casa';
+    casa.style.gridColumn = col;
+    casa.style.gridRow = row;
+    if (CORES[i]) casa.style.background = CORES[i];
+    if (i in CANTOS) { casa.classList.add('canto'); casa.textContent = CANTOS[i]; }
+    tabuleiro.appendChild(casa);
+    casas.push(casa);
+  }
+
+  const peao = document.createElement('img');
+  peao.className = 'peao';
+  peao.src = 'gatinho.png';
+  peao.alt = 'Peão: gatinho amarelo';
+  casas[0].appendChild(peao);
+  let posicao = 0;
+
+  const PONTOS = { 1:[4], 2:[0,8], 3:[0,4,8], 4:[0,2,6,8], 5:[0,2,4,6,8], 6:[0,2,3,5,6,8] };
+  function desenha(dado, valor) {
+    dado.innerHTML = Array.from({ length: 9 }, (_, i) => '<i' + (PONTOS[valor].includes(i) ? ' class="p"' : '') + '></i>').join('');
+  }
+  const d1 = document.getElementById('d1'), d2 = document.getElementById('d2');
+  const sorteia = () => 1 + Math.floor(Math.random() * 6);
+  desenha(d1, 4); desenha(d2, 2);
+
+  const botao = document.getElementById('rolar');
+  const resultado = document.getElementById('resultado');
+  const mensagem = document.getElementById('mensagem');
+  document.getElementById('texto-mensagem').textContent = MENSAGEM;
+  let jogando = false, primeiraVez = true;
+
+  function andar(passos, fim) {
+    if (passos === 0) { fim(); return; }
+    posicao = (posicao + 1) % 40;
+    casas[posicao].appendChild(peao);
+    peao.classList.remove('pula'); void peao.offsetWidth; peao.classList.add('pula'); // pulinho
+    setTimeout(() => andar(passos - 1, fim), reduzir ? 0 : 250);
+  }
+
+  function terminar(a, b) {
+    desenha(d1, a); desenha(d2, b);
+    d1.classList.remove('rolando'); d2.classList.remove('rolando');
+    resultado.textContent = 'Você tirou ' + a + ' e ' + b + '. Avance ' + (a + b) + ' casas.' + (a === b ? ' Dados iguais!' : '');
+    if (a === b) confete();
+    andar(a + b, () => {
+      jogando = false;
+      const c = casas[posicao];
+      c.classList.remove('pisa'); void c.offsetWidth; c.classList.add('pisa'); // casa pulsa ao chegar
+      if (primeiraVez) { primeiraVez = false; confete(); mensagem.showModal(); }
+    });
+  }
+
+  botao.addEventListener('click', () => {
+    if (jogando) return;
+    jogando = true;
+    botao.classList.remove('chama');
+    const a = sorteia(), b = sorteia();
+    if (reduzir) { terminar(a, b); return; }
+    d1.classList.add('rolando'); d2.classList.add('rolando');
+    let n = 0;
+    const t = setInterval(() => {
+      desenha(d1, sorteia()); desenha(d2, sorteia());
+      if (++n >= 8) { clearInterval(t); terminar(a, b); }
+    }, 90);
+  });
+</script>
+</body>
+</html>
